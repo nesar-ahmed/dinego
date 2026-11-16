@@ -1,0 +1,10 @@
+import type { Metadata } from "next";
+import { AdminOverview } from "@/components/admin/admin-overview";
+
+export const metadata: Metadata = {
+  title: "Admin overview — DineGo",
+};
+
+export default function AdminOverviewPage() {
+  return <AdminOverview />;
+}
