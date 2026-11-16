@@ -83,14 +83,38 @@ dinego/
   packages/
     shared/                   @dinego/shared
       src/
-        enums.ts              user roles
-        entities.ts           user/customer response shapes
+        enums.ts              every domain enum
+        entities.ts           every domain entity and its properties
         api.ts                auth, users, and health contracts
   eslint.config.mjs           root ESLint flat config
   turbo.json
 ```
 
 Only three Nest modules exist: **database**, **users**, and **health**. There is one TypeORM entity, `users/entities/user.entity.ts`. Customers are users with the `CUSTOMER` role, so customer registration and login share the same table and entity as staff accounts.
+
+## Shared domain model
+
+`@dinego/shared` is the single source of truth for the full restaurant domain, even before each
+Nest module exists. Entity schemas live in `packages/shared/src/entities.ts` and enums live in
+`packages/shared/src/enums.ts`.
+
+| Area             | Entities                                                                     |
+| ---------------- | ---------------------------------------------------------------------------- |
+| Identity         | `User`, `Customer`                                                           |
+| Menu             | `MenuCategory`, `MenuItem`, `ModifierGroup`, `Modifier`, `ItemModifierGroup` |
+| Floor            | `DiningTable`                                                                |
+| Orders           | `Order`, `OrderItem`, `OrderItemModifier`                                    |
+| Payments         | `Payment`, `Refund`                                                          |
+| Inventory        | `Ingredient`, `Recipe`, `StockMovement`                                      |
+| Staff and system | `Shift`, `PickupSlot`, `AuditLog`                                            |
+
+Conventions encoded in the schemas:
+
+- IDs are positive integers.
+- All money values are integer cents.
+- Dates are ISO-8601 strings.
+- Secrets such as `passwordHash` and `pinHash` are excluded from serialized entity contracts.
+- Order, item, table, payment, and stock-movement states use the shared enum unions.
 
 ## Prerequisites
 
