@@ -1,0 +1,39 @@
+{
+  "name": "dinego",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": ">=24.11.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "npm run clean && turbo run build",
+    "start": "turbo run start",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "test": "turbo run test",
+    "test:e2e": "npm run test:e2e -w @dinego/api",
+    "db:migrate": "npm run db:migrate -w @dinego/api",
+    "db:seed": "npm run db:seed -w @dinego/api",
+    "clean": "turbo run clean && rm -rf .turbo && find . -name '*.tsbuildinfo' -not -path './node_modules/*' -delete",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,css,mjs}\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^16.4.6",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "turbo": "^2.11.11",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.2"
+  }
+}

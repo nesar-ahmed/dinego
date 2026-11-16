@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# local-only files
+guide.md
+
+# generated build and test output
+dist/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+coverage/
+.vite/
+
+# local SQLite database at the root of apps/api
+apps/api/*.sqlite
+apps/api/*.sqlite-journal
+apps/api/*.sqlite-wal
+apps/api/*.sqlite-shm
+
+# env
+.env
+.env.local
+.env.*.local
+
+# logs and OS files
+*.log
+npm-debug.log*
+.DS_Store
