@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { getFieldErrors } from "@/lib/api";
 import { loginSession } from "@/lib/auth-client";
+import { dashboardPathFor } from "@/lib/dashboards";
 import { getSafeNextPath } from "@/lib/navigation";
 import { Field, FormError, SubmitButton } from "@/components/form";
 import { PasswordField } from "@/components/password-field";
@@ -27,9 +28,12 @@ export function LoginForm() {
 
       if ("customer" in result) {
         const next = getSafeNextPath("/account");
-        router.replace(next.startsWith("/admin") ? "/account" : next);
+        const staffOnly = next.startsWith("/admin") || next.startsWith("/staff");
+        router.replace(staffOnly ? "/account" : next);
       } else {
-        router.replace(getSafeNextPath("/admin", "/admin"));
+        // Admins and managers use the admin console; kitchen, waiters, and cashiers their boards.
+        const home = dashboardPathFor(result.user.role);
+        router.replace(getSafeNextPath(home, home.startsWith("/staff") ? "/staff" : "/admin"));
       }
 
       router.refresh();

@@ -7,6 +7,7 @@ import type { MeResponse } from "@dinego/shared";
 import { ApiError } from "@/lib/api";
 import { fetchMe, logout } from "@/lib/auth-client";
 import { AUTH_CHANGED_EVENT } from "@/lib/auth";
+import { dashboardPathFor } from "@/lib/dashboards";
 
 export function AuthNav() {
   const router = useRouter();
@@ -102,7 +103,7 @@ export function AuthNav() {
   const name = customer?.name ?? staff?.name ?? "Account";
   const email = customer?.email ?? staff?.email ?? "";
   const roleLabel = customer ? "Customer" : (staff?.role ?? "Staff");
-  const dashboardHref = customer ? "/account" : "/admin";
+  const dashboardHref = staff ? dashboardPathFor(staff.role) : "/account";
 
   return (
     <div ref={menuRef} className="relative">
@@ -139,7 +140,7 @@ export function AuthNav() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-surface shadow-premium"
+          className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-line bg-surface shadow-overlay"
         >
           <div className="border-b border-line px-4 py-3">
             <p className="truncate text-sm font-semibold text-fg">{name}</p>
@@ -155,15 +156,6 @@ export function AuthNav() {
             >
               <DashboardIcon />
               Dashboard
-            </Link>
-            <Link
-              href="/#features"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-muted transition hover:bg-surface-2 hover:text-fg"
-            >
-              <CompassIcon />
-              Explore platform
             </Link>
           </div>
 
@@ -201,24 +193,6 @@ function DashboardIcon() {
       <rect x="14" y="3" width="7" height="7" rx="1.5" />
       <rect x="3" y="14" width="7" height="7" rx="1.5" />
       <rect x="14" y="14" width="7" height="7" rx="1.5" />
-    </svg>
-  );
-}
-
-function CompassIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="size-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M15.5 8.5l-2 5-5 2 2-5 5-2z" />
     </svg>
   );
 }

@@ -10,6 +10,7 @@ import {
 } from "@dinego/shared";
 import { ApiError, apiRequest } from "@/lib/api";
 import { fetchMe, logout } from "@/lib/auth-client";
+import { dashboardPathFor, isStaffDashboardRole } from "@/lib/dashboards";
 
 type AdminContextValue = {
   admin: User;
@@ -43,6 +44,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
     try {
       const session = await fetchMe();
+
+      if (session.type === "STAFF" && isStaffDashboardRole(session.user.role)) {
+        router.replace(dashboardPathFor(session.user.role));
+        return;
+      }
 
       if (
         session.type !== "STAFF" ||
