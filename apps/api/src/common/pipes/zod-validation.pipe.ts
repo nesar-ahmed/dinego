@@ -14,6 +14,9 @@ export class ZodValidationPipe implements PipeTransform {
 
     if (!result.success) {
       throw new BadRequestException({
+        // Nest does not add statusCode when the exception body is an object; the shared
+        // apiErrorSchema (used by the web client) requires it.
+        statusCode: 400,
         code: "VALIDATION_ERROR",
         message: "Request validation failed",
         details: result.error.issues.map((issue) => ({
