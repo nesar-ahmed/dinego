@@ -3,14 +3,12 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { INestApplication } from "@nestjs/common";
-import { Test } from "@nestjs/testing";
-import cookieParser from "cookie-parser";
 import request from "supertest";
 import { DataSource } from "typeorm";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { AppModule } from "../src/app.module.js";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { buildDataSourceOptions } from "../src/database/data-source.js";
 import { seedUsers, userAccounts } from "../src/database/seeds/users.seed.js";
+import { createE2eApp, type ServerLogs } from "./support/e2e-app.js";
 
 const adminAccount = userAccounts.find((account) => account.role === "ADMIN");
 const customerAccounts = userAccounts.filter((account) => account.role === "CUSTOMER");
@@ -23,6 +21,7 @@ if (!adminAccount || !customerAccount || !secondCustomerAccount) {
 
 describe("Users API (e2e)", () => {
   let app: INestApplication;
+  let logs: ServerLogs;
   let databaseDir: string;
   let originalDatabasePath: string | undefined;
   let originalJwtSecret: string | undefined;
@@ -46,11 +45,11 @@ describe("Users API (e2e)", () => {
       await dataSource.destroy();
     }
 
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication();
-    app.use(cookieParser());
-    app.setGlobalPrefix("api/v1");
-    await app.init();
+    ({ app, logs } = await createE2eApp());
+  });
+
+  afterEach(() => {
+    logs.assertNoUnexpectedErrors();
   });
 
   afterAll(async () => {
