@@ -1,8 +1,9 @@
-import { ForbiddenException, UnauthorizedException } from "@nestjs/common";
+import { ConflictException, ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import type { JwtService } from "@nestjs/jwt";
 import bcrypt from "bcryptjs";
 import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { NotificationPublisher } from "../notifications/notification-publisher.js";
 import { User } from "./entities/user.entity.js";
 import { UsersService } from "./users.service.js";
 
@@ -29,6 +30,7 @@ describe("UsersService", () => {
     find: ReturnType<typeof vi.fn>;
   };
   let jwtService: { signAsync: ReturnType<typeof vi.fn> };
+  let notifications: { publish: ReturnType<typeof vi.fn> };
   let service: UsersService;
 
   beforeEach(() => {
@@ -42,9 +44,12 @@ describe("UsersService", () => {
       signAsync: vi.fn().mockResolvedValue("signed-token"),
     };
 
+    notifications = { publish: vi.fn().mockResolvedValue(2) };
+
     service = new UsersService(
       repository as unknown as Repository<User>,
       jwtService as unknown as JwtService,
+      notifications as unknown as NotificationPublisher,
     );
   });
 
@@ -75,6 +80,31 @@ describe("UsersService", () => {
     expect(jwtService.signAsync).toHaveBeenCalledWith(
       expect.objectContaining({ type: "CUSTOMER", role: "CUSTOMER" }),
     );
+    expect(notifications.publish).toHaveBeenCalledTimes(1);
+    expect(notifications.publish).toHaveBeenCalledWith([
+      expect.objectContaining({
+        type: "CUSTOMER_WELCOME",
+        audience: { kind: "user", userId: 9 },
+      }),
+      expect.objectContaining({
+        type: "CUSTOMER_REGISTERED",
+        audience: { kind: "roles", roles: ["ADMIN", "MANAGER"], excludeUserId: 9 },
+      }),
+    ]);
+  });
+
+  it("notifies nobody when the registration is refused", async () => {
+    repository.findOne.mockResolvedValue(makeUser({ email: "taken@dinego.com" }));
+
+    await expect(
+      service.registerCustomer({
+        name: "Second Account",
+        email: "taken@dinego.com",
+        phone: null,
+        password: "Password123!",
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(notifications.publish).not.toHaveBeenCalled();
   });
 
   it("rejects an admin login from a non-admin staff account", async () => {

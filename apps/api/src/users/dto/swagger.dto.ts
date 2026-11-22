@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { USER_ROLES, type UserRole } from "@dinego/shared";
+import { ACCOUNT_ERROR_CODES, USER_ROLES, type UserRole } from "@dinego/shared";
 
 export class LoginDto {
   @ApiProperty({ example: "admin@dinego.com", format: "email" })
@@ -108,4 +108,72 @@ export class CustomerMeResponseDto {
 
   @ApiProperty({ type: CustomerDto })
   customer!: CustomerDto;
+}
+
+export class UpdateProfileDto {
+  @ApiPropertyOptional({ example: "Sofia Alvarez", minLength: 2, maxLength: 120 })
+  name?: string;
+
+  @ApiPropertyOptional({
+    example: "+1 555 0200",
+    nullable: true,
+    type: String,
+    minLength: 6,
+    maxLength: 30,
+    description: "null or an empty string removes the phone number.",
+  })
+  phone?: string | null;
+}
+
+export class ChangeEmailDto {
+  @ApiProperty({
+    example: "sofia@example.com",
+    format: "email",
+    description: "Stored trimmed and lowercase.",
+  })
+  newEmail!: string;
+
+  @ApiProperty({ example: "Customer1234!", format: "password" })
+  currentPassword!: string;
+}
+
+export class ChangePasswordDto {
+  @ApiProperty({ example: "Customer1234!", format: "password" })
+  currentPassword!: string;
+
+  @ApiProperty({
+    example: "NewPassword5678!",
+    format: "password",
+    minLength: 8,
+    maxLength: 128,
+    description: "Must differ from the current password.",
+  })
+  newPassword!: string;
+}
+
+export class CustomerResponseDto {
+  @ApiProperty({ type: CustomerDto })
+  customer!: CustomerDto;
+}
+
+export class AccountErrorDetailDto {
+  @ApiProperty({ example: "currentPassword" })
+  path!: string;
+
+  @ApiProperty({ example: "Your current password is incorrect" })
+  message!: string;
+}
+
+export class AccountErrorDto {
+  @ApiProperty({ example: 400 })
+  statusCode!: number;
+
+  @ApiProperty({ enum: [...ACCOUNT_ERROR_CODES], example: "INVALID_CURRENT_PASSWORD" })
+  code!: string;
+
+  @ApiProperty({ example: "Your current password is incorrect" })
+  message!: string;
+
+  @ApiPropertyOptional({ type: [AccountErrorDetailDto] })
+  details?: AccountErrorDetailDto[];
 }

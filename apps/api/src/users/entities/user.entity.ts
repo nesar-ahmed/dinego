@@ -1,8 +1,9 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 import type { UserRole } from "@dinego/shared";
 
-/** Restaurant staff account. Customers live in the `customers` table. */
+/** Staff and customer accounts. Customers are users with the `CUSTOMER` role. */
 @Entity({ name: "users" })
+@Index("idx_users_role", ["role"])
 export class User {
   @PrimaryGeneratedColumn({ type: "integer" })
   id!: number;
@@ -27,6 +28,10 @@ export class User {
 
   @Column({ type: "boolean", default: true })
   active!: boolean;
+
+  /** Session version carried in every JWT as `ver`. Incremented to sign out all sessions. */
+  @Column({ type: "integer", name: "token_version", default: 0 })
+  tokenVersion!: number;
 
   @CreateDateColumn({ type: "datetime", name: "created_at" })
   createdAt!: Date;

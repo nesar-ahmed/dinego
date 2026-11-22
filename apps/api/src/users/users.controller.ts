@@ -5,11 +5,14 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
+  Put,
   Res,
   UseGuards,
 } from "@nestjs/common";
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
@@ -25,26 +28,38 @@ import {
 } from "@nestjs/swagger";
 import type { Response } from "express";
 import {
+  changeEmailSchema,
+  changePasswordSchema,
   customerRegisterSchema,
   loginSchema,
+  updateProfileSchema,
+  type ChangeEmailInput,
+  type ChangePasswordInput,
   type CustomerRegisterInput,
   type LoginInput,
   type TokenPayload,
+  type UpdateProfileInput,
 } from "@dinego/shared";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe.js";
 import { clearAccessTokenCookie, setAccessTokenCookie } from "./auth-cookie.js";
 import { CurrentAuth } from "./decorators/current-auth.decorator.js";
 import { Roles } from "./decorators/roles.decorator.js";
 import {
+  AccountErrorDto,
+  ChangeEmailDto,
+  ChangePasswordDto,
   CustomerAuthResponseDto,
   CustomerMeResponseDto,
+  CustomerResponseDto,
   CustomersResponseDto,
   LoginDto,
   RegisterCustomerDto,
   StaffAuthResponseDto,
   StaffMeResponseDto,
+  UpdateProfileDto,
   UsersResponseDto,
 } from "./dto/swagger.dto.js";
+import { CustomerGuard } from "./guards/customer.guard.js";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard.js";
 import { RolesGuard } from "./guards/roles.guard.js";
 import { UsersService } from "./users.service.js";
@@ -233,6 +248,82 @@ export class UsersController {
   @Get("me")
   me(@CurrentAuth() auth: TokenPayload) {
     return this.usersService.getMe(auth);
+  }
+
+  /** Customer profile update: name and phone. */
+  @ApiOAuth2(["api"], "developer-login")
+  @ApiOperation({
+    summary: "Update my profile",
+    description:
+      "Customers only. Updates name and/or phone (null or empty removes the phone). Email and password are changed with their own endpoints.",
+  })
+  @ApiBody({ type: UpdateProfileDto })
+  @ApiOkResponse({ type: CustomerResponseDto })
+  @ApiBadRequestResponse({ type: AccountErrorDto, description: "VALIDATION_ERROR" })
+  @ApiUnauthorizedResponse({ description: "Missing or invalid session" })
+  @ApiForbiddenResponse({ description: "Staff accounts (CUSTOMER_ONLY)" })
+  @UseGuards(JwtAuthGuard, CustomerGuard)
+  @Patch("me/profile")
+  updateProfile(
+    @CurrentAuth() auth: TokenPayload,
+    @Body(new ZodValidationPipe(updateProfileSchema)) input: UpdateProfileInput,
+  ) {
+    return this.usersService.updateProfile(auth.sub, input);
+  }
+
+  /** Customer email change, confirmed with the current password. */
+  @ApiOAuth2(["api"], "developer-login")
+  @ApiOperation({
+    summary: "Change my email",
+    description:
+      "Customers only. Requires the current password. The new email is used to sign in from now on; other sessions stay signed in.",
+  })
+  @ApiBody({ type: ChangeEmailDto })
+  @ApiOkResponse({ type: CustomerResponseDto })
+  @ApiBadRequestResponse({
+    type: AccountErrorDto,
+    description: "INVALID_CURRENT_PASSWORD, or VALIDATION_ERROR (including the same email)",
+  })
+  @ApiConflictResponse({ type: AccountErrorDto, description: "EMAIL_TAKEN or CREDENTIALS_CHANGED" })
+  @ApiUnauthorizedResponse({ description: "Missing or invalid session" })
+  @ApiForbiddenResponse({ description: "Staff accounts (CUSTOMER_ONLY)" })
+  @UseGuards(JwtAuthGuard, CustomerGuard)
+  @Put("me/email")
+  changeEmail(
+    @CurrentAuth() auth: TokenPayload,
+    @Body(new ZodValidationPipe(changeEmailSchema)) input: ChangeEmailInput,
+  ) {
+    return this.usersService.changeEmail(auth.sub, input);
+  }
+
+  /** Customer password change. Signs out every other session. */
+  @ApiOAuth2(["api"], "developer-login")
+  @ApiOperation({
+    summary: "Change my password",
+    description:
+      "Customers only. Requires the current password. Signs out every other session and device; this one receives a new token and session cookie.",
+  })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiOkResponse({ type: CustomerAuthResponseDto })
+  @ApiBadRequestResponse({
+    type: AccountErrorDto,
+    description:
+      "INVALID_CURRENT_PASSWORD, or VALIDATION_ERROR (including reusing the current password)",
+  })
+  @ApiConflictResponse({ type: AccountErrorDto, description: "CREDENTIALS_CHANGED" })
+  @ApiUnauthorizedResponse({ description: "Missing or invalid session" })
+  @ApiForbiddenResponse({ description: "Staff accounts (CUSTOMER_ONLY)" })
+  @UseGuards(JwtAuthGuard, CustomerGuard)
+  @Put("me/password")
+  async changePassword(
+    @CurrentAuth() auth: TokenPayload,
+    @Body(new ZodValidationPipe(changePasswordSchema)) input: ChangePasswordInput,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.usersService.changePassword(auth.sub, input);
+    setAccessTokenCookie(response, result.accessToken);
+
+    return result;
   }
 
   /** Admin-only staff user list. */
