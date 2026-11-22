@@ -23,7 +23,7 @@ async function bootstrap() {
       [
         "DineGo restaurant management API.",
         "",
-        "Phase 1 covers users, authentication, and health. Customers and staff share one users table;",
+        "Phase 1 covers users, authentication, the public menu, the customer cart, dining tables, checkout with dummy payments, customer orders, in-app notifications, and health. Customers and staff share one users table;",
         "customers are identified by the `CUSTOMER` role.",
         "",
         "**Swagger login:** click **Authorize**, then enter an email and password from the demo accounts.",
@@ -51,6 +51,17 @@ async function bootstrap() {
     )
     .addTag("Health", "Service and database health")
     .addTag("Users", "Customer registration, login, profiles, and admin lists")
+    .addTag("Menu", "Public menu: categories and items to browse, filter, search, and sort")
+    .addTag("Cart", "The signed-in customer's cart: add, change quantity, and remove items")
+    .addTag("Tables", "Tables customers can choose for dine-in")
+    .addTag("Floor", "Staff floor management: tables, layout, and table status")
+    .addTag("Orders", "Checkout (dummy payment + order) and the customer's orders")
+    .addTag("Payments", "Checkout quote and payment history. Dummy payments only")
+    .addTag("Staff orders", "Order list and status changes for restaurant staff")
+    .addTag(
+      "Notifications",
+      "The signed-in user's in-app notifications (customers and every staff role), kept for 7 days",
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
