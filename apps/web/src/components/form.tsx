@@ -7,18 +7,27 @@ type FieldProps = {
   trailing?: ReactNode;
 } & InputHTMLAttributes<HTMLInputElement>;
 
+/**
+ * Labelled input. The label names only the field; the hint or error is linked with
+ * `aria-describedby`, so screen readers announce it as a description rather than the name.
+ */
 export function Field({ label, hint, error, trailing, id, ...props }: FieldProps) {
   const inputId = id ?? props.name;
+  const descriptionId = error || hint ? `${inputId}-description` : undefined;
 
   return (
-    <label className="block" htmlFor={inputId}>
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+    <div className="block">
+      <label
+        htmlFor={inputId}
+        className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted"
+      >
         {label}
-      </span>
+      </label>
       <div className="relative">
         <input
           id={inputId}
           aria-invalid={error ? true : undefined}
+          aria-describedby={descriptionId}
           {...props}
           className={`w-full rounded-xl border bg-ink/60 py-2.5 pl-3.5 text-sm text-fg outline-none transition placeholder:text-muted/60 focus:ring-2 ${
             trailing ? "pr-11" : "pr-3.5"
@@ -33,11 +42,17 @@ export function Field({ label, hint, error, trailing, id, ...props }: FieldProps
         )}
       </div>
       {error ? (
-        <span className="mt-1.5 block text-xs text-danger">{error}</span>
+        <span id={descriptionId} className="mt-1.5 block text-xs text-danger">
+          {error}
+        </span>
       ) : (
-        hint && <span className="mt-1.5 block text-xs text-muted">{hint}</span>
+        hint && (
+          <span id={descriptionId} className="mt-1.5 block text-xs text-muted">
+            {hint}
+          </span>
+        )
       )}
-    </label>
+    </div>
   );
 }
 

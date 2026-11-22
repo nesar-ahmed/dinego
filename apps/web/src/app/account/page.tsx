@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { AccountView } from "@/components/account-view";
+import { OverviewView } from "@/components/account/overview-view";
 
 export const metadata: Metadata = {
-  title: "Dashboard — DineGo",
+  title: "Your account — DineGo Kitchen",
 };
 
 export default function AccountPage() {
-  return <AccountView />;
+  return <OverviewView />;
 }
