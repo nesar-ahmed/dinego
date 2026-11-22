@@ -22,9 +22,13 @@ export class ApiError extends Error {
 }
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   token?: string | null;
+  /** Lets callers cancel stale requests, for example while typing in a search box. */
+  signal?: AbortSignal;
+  /** Extra request headers, e.g. `Idempotency-Key` for checkout. */
+  headers?: Record<string, string>;
 };
 
 /**
@@ -42,6 +46,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers.set("Authorization", `Bearer ${options.token}`);
   }
 
+  for (const [name, value] of Object.entries(options.headers ?? {})) {
+    headers.set(name, value);
+  }
+
   let response: Response;
 
   try {
@@ -51,8 +59,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       cache: "no-store",
       credentials: "include",
+      signal: options.signal,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+
     throw new ApiError(
       `Could not reach the API at ${API_BASE_URL}. Start it with "npm run dev".`,
       0,
